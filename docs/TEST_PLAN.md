@@ -32,15 +32,17 @@ Paths in this repo: the extra is `klipper/extras/cfs_retry_guard.py`, the config
 Use a two-color test print with a short PLA spool or a spool you can open.
 1. During a print, force a key839 on the outgoing slot. Option A: `BOX_TEST_MAKE_ERROR` (exists in the `.so`; parameters unknown, try `HELP`). Option B: mask the slot sensor by pulling filament back past it by hand right as the tool change starts.
 2. When the popup shows, run `CFS_RETRY_GUARD_STATUS` before pressing Retry. Expected: `err: retrude_err`, `error_tnn` with `last_tnn`/`tnn`, `would do: guard ...` (for a false empty) or `stock ...`.
-3. Press Retry on the screen. Expected for a false empty:
+3. Press Retry on the screen (default `auto_resume: True`). Expected for a false empty:
    - No "extrude all material" line in klippy.log.
-   - BOX_ERROR_CLEAR, then the quit sequence, then the load sequence with `TNN=<target>`.
-   - Message "Press Resume". Press Resume on the screen and confirm the correct color prints.
-4. Failure check: block the outgoing spool from turning during step 3. Expected: the unload error is raised again, nothing loads, and the print stays paused.
-5. After a clean pass, optionally set `auto_resume: True` and repeat. Watch master-server for a duplicate-resume key16 popup ("Print is not paused, resume aborted"). If one appears, go back to `auto_resume: False`.
+   - BOX_ERROR_CLEAR, then the quit sequence, then the load sequence with `TNN=<target>`, then `RESUME`.
+   - The print continues on its own. Confirm the correct color prints.
+   - Watch master-server for a duplicate-resume key16 popup ("Print is not paused, resume aborted"). If one appears, set `auto_resume: False`.
+4. Failure check: block the outgoing spool from turning during step 3. Expected: the unload error is raised again, nothing loads, nothing resumes, and the print stays paused.
+5. Optional manual-mode check: set `auto_resume: False`, `FIRMWARE_RESTART` while idle, and repeat step 3. Expected: same sequence without `RESUME`, then the message "Press Resume". Press Resume on the screen and confirm the correct color prints.
 
 ## 5. Rollback
 - Fast disable: set `enabled: False` in `cfs_retry_guard.cfg`, then `FIRMWARE_RESTART`. The stock handler runs for every retry.
+- Keep the guard but stop automatic resume: set `auto_resume: False`, then `FIRMWARE_RESTART`. The guard recovers and leaves the print paused for you to press Resume.
 - Full removal: remove the `[include cfs_retry_guard.cfg]` line FIRST, then delete `extras/cfs_retry_guard.py`, then `FIRMWARE_RESTART`.
 - Purge cap: remove the `max_tube_length` line, or restore `box.cfg.pre-guard`.
 - The stock command can be run by hand at any time as `_BOX_TNN_RETRY_PROCESS_BASE`.

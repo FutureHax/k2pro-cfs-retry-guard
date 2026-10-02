@@ -4,8 +4,8 @@
 # the box reports the old slot empty while its connection bit is still set and
 # the toolhead sensor still sees filament. Stock would run
 # extrusion_all_materials (purge up to max_tube_length). This module instead
-# clears the error, retries the unload, loads the target slot and leaves the
-# print paused (or resumes if auto_resume is set). Every other case is passed
+# clears the error, retries the unload, loads the target slot and resumes the
+# print (or leaves it paused if auto_resume is off). Every other case is passed
 # to the stock handler unchanged.
 import inspect
 import logging
@@ -44,7 +44,7 @@ class CfsRetryGuard:
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object("gcode")
         self.enabled = config.getboolean("enabled", True)
-        self.auto_resume = config.getboolean("auto_resume", False)
+        self.auto_resume = config.getboolean("auto_resume", True)
         self.sensor_name = config.get("filament_sensor", "filament_sensor")
         self.refresh_gcode = config.get(
             "sensor_refresh_gcode", "BOX_GET_FILAMENT_SENSOR_STATE")

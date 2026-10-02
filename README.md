@@ -25,7 +25,7 @@ That limit appears to be the `max_tube_length` setting under `[box]`. This is in
 1. Clears the error internally.
 2. Retracts the errored slot back to the CFS.
 3. Loads the slot the print was switching to.
-4. Resumes the print. By default it leaves the print paused and asks you to press Resume. With `auto_resume: True` it resumes on its own.
+4. Resumes the print. By default it resumes automatically. With `auto_resume: False` it leaves the print paused for you to press Resume.
 
 To do this it has to fully hijack the stock retry command (`BOX_TNN_RETRY_PROCESS`). If the disagreeing-sensor state is not detected, it skips its custom behavior and calls the stock command. The custom behavior only runs on a `retrude_err` where the print head sensor sees filament and the CFS reports the old slot empty while still showing it connected. If it cannot read that state, or a check fails partway, it stops and leaves the print paused.
 
@@ -54,16 +54,17 @@ In `config/cfs_retry_guard.cfg`, section `[cfs_retry_guard]`:
 | Option | Default | Meaning |
 |---|---|---|
 | `enabled` | `True` | `False` sends every retry to the stock command. |
-| `auto_resume` | `False` | `True` resumes the print after a successful recovery. |
+| `auto_resume` | `True` | Resumes the print after a successful recovery. `False` leaves it paused for you to press Resume. |
 | `filament_sensor` | `filament_sensor` | Name of the print head `filament_switch_sensor`. |
 | `sensor_refresh_gcode` | `BOX_GET_FILAMENT_SENSOR_STATE` | Command run to refresh the CFS sensor state before deciding. |
 | `unreadable_policy` | `refuse` | What to do on a `retrude_err` when the state cannot be read. `refuse` leaves the print paused; `stock` calls the stock command. |
 
-`auto_resume` is off by default so you can check the loaded color before the print continues. An automatic resume may also collide with the printer's own resume handling and show a "Print is not paused" popup; that is untested. Turn it on only after a manual recovery has worked.
+With `auto_resume: True`, the print resumes as soon as the target slot is loaded and the print head sensor sees filament. The guard cannot check the color. An automatic resume may also collide with the screen's own resume and show a "Print is not paused" popup; this is untested. Set `auto_resume: False` if you want to check before resuming.
 
 ## Rollback
 
 - Quick disable: set `enabled: False`, then restart Klipper. Every retry goes to the stock command.
+- Keep the guard but stop automatic resume: set `auto_resume: False`, then restart Klipper.
 - Full removal: remove the `[include cfs_retry_guard.cfg]` line first, then delete the extra, then restart Klipper.
 - Purge cap: remove the `max_tube_length` line, or restore your `box.cfg` backup.
 - The stock retry can be run by hand at any time as `_BOX_TNN_RETRY_PROCESS_BASE`.

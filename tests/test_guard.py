@@ -153,7 +153,7 @@ class GuardTest(unittest.TestCase):
         r.gcode.on_run = on_run
 
     def test_false_empty_recovers_without_purge(self):
-        r = Rig()
+        r = Rig(auto_resume=False)
         self._simulate_unload_load(r)
         out = r.retry()
         self.assertEqual(r.stock_calls, [])
@@ -163,11 +163,21 @@ class GuardTest(unittest.TestCase):
         self.assertNotIn("RESUME", r.log)
         self.assertIn("Press Resume", out.out[-1])
 
-    def test_auto_resume(self):
-        r = Rig(auto_resume=True)
+    def test_auto_resume_by_default(self):
+        r = Rig()
+        self.assertTrue(r.guard.auto_resume)
         self._simulate_unload_load(r)
         r.retry()
+        self.assertIn("BOX_LOAD_MATERIAL_EXTRUDE_MATERIAL TNN=T1B", r.log)
         self.assertEqual(r.log[-1], "RESUME")
+
+    def test_auto_resume_skipped_when_not_paused(self):
+        r = Rig()
+        r.pr.is_paused = False
+        self._simulate_unload_load(r)
+        out = r.retry()
+        self.assertNotIn("RESUME", r.log)
+        self.assertIn("Press Resume", out.out[-1])
 
     def test_unload_failure_stays_paused(self):
         r = Rig()
