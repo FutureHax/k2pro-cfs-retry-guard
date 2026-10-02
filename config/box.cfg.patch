@@ -1,0 +1,23 @@
+Purge cap for /mnt/UDISK/printer_data/config/box.cfg on the printer.
+Apply by hand (this is not a git-applyable diff). See docs/TEST_PLAN.md.
+
+--- box.cfg (stock, [box] section)
++++ box.cfg (proposed)
+@@ [box]
+ buffer_empty_len: 30
++# Caps the stock extrusion_all_materials purge ("extrude more than %d").
++# Stock default is 3000. Measure the CFS-to-toolhead tube and set to that
++# length plus about 300 mm.
++max_tube_length: 2000
+
+cfg-guardian entry (patches.json "changes" array), only if the guardian
+supports adding a new key; otherwise add the line by hand:
+    {
+      "file": "box.cfg",
+      "section": "[box]",
+      "description": "Cap the CFS empty-slot purge below the 3000 mm stock default",
+      "setting": "max_tube_length",
+      "from": null,
+      "to": "2000",
+      "enabled": true
+    }
